@@ -1,29 +1,34 @@
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
-from collections import Counter
 
 class SatEnv(gym.Env):
-    """A SAT solving environment for reinforcement learning, integrating custom SAT solving logic."""
     metadata = {"render_modes": ["human"], "render_fps": 30}
 
-    def __init__(self, formula):
+    def __init__(self, formula, R_max=10, alpha=0.1):
         super().__init__()
         self.original_formula = formula
-        self.formula = list(formula)  # Copy to avoid modifying the original formula
+        self.formula = list(formula)  
         self.variables = self.get_all_variables(formula)
-        self.num_variables = 20
+        self.num_variables = len(self.variables)
 
-        # Define action and observation space
         self.action_space = spaces.Discrete(self.num_variables * 2)
         self.observation_space = spaces.Box(low=-1, high=1, shape=(self.num_variables,), dtype=np.float32)
 
-        self.assignment = []
+        self.assignment = np.zeros(self.num_variables, dtype=int)
+        self.step_count = 0  # To calculate depth for the reward function
+
+        # Reward function parameters
+        self.R_max = R_max
+        self.alpha = alpha
 
     def get_all_variables(self, formula):
-        return list(set(abs(num) for sublist in formula for num in sublist))
+        return sorted(list(set(abs(num) for sublist in formula for num in sublist)))
 
     def step(self, action):
+        # Increment step count
+        self.step_count += 1
+
         # Decode action into variable index and assignment value
         var_index = action % self.num_variables
         assign_value = 1 if action >= self.num_variables else -1
@@ -35,16 +40,24 @@ class SatEnv(gym.Env):
 
         # Check for conflicts or an empty formula (solved)
         done = len(self.formula) == 0 or any(len(clause) == 0 for clause in self.formula)
-        reward = 1 if len(self.formula) == 0 else -1 if done else 0
-        info = {}
+        
+        # Calculate reward based on the depth
+        if len(self.formula) == 0:  # Solution found
+            reward = self.R_max - self.alpha * self.step_count
+        elif done:  # Unsatisfiable state reached
+            reward = -self.R_max  # Maximum penalty for failure
+        else:
+            reward = -self.alpha  # Small penalty for each step
 
-        # Adjusting the return statement to include `truncated`
+        info = {"formula": self.formula}
+
         return np.array(self.assignment, dtype=np.float32), reward, done, False, info
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         self.formula = list(self.original_formula)  # Reset formula to initial state
-        self.assignment = [0] * self.num_variables  # Reset assignments
+        self.assignment = np.zeros(self.num_variables, dtype=int)  # Reset assignments
+        self.step_count = 0  # Reset step count
         return np.array(self.assignment, dtype=np.float32), {}
 
     def render(self, mode='human'):
@@ -53,11 +66,9 @@ class SatEnv(gym.Env):
             print(f"Remaining formula: {self.formula}")
 
     def close(self):
-        # Optional: Implement any necessary cleanup
         pass
 
     def apply_assignment(self, variable, value):
-        # Implement the assignment logic here, similar to your original approach
         new_formula = []
         for clause in self.formula:
             if variable in clause and value == 1:
@@ -65,10 +76,5 @@ class SatEnv(gym.Env):
             if -variable in clause and value == -1:
                 continue  # Clause is satisfied, remove it
             new_clause = [x for x in clause if x != variable and x != -variable]  # Remove variable and its negation
-            if new_clause:
-                new_formula.append(new_clause)
-            else:
-                # This means we have a conflict because the clause would be empty, return immediately
-                self.formula = [[]]  # Representing an unsatisfiable state
-                return
+            new_formula.append(new_clause)
         self.formula = new_formula
