@@ -1,10 +1,11 @@
-import numpy as np
 import gymnasium as gym
+import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.callbacks import CheckpointCallback
 from sat_env import SatEnv
+import gzip
 
-# Assume SatEnv and read_cnf_file are defined as shown previously
 def read_cnf_file(filename):
     formula = []
     opener = gzip.open if filename.endswith('.gz') else open
@@ -21,16 +22,17 @@ def read_cnf_file(filename):
 
     return formula
 
-# Use your custom evaluate function
-env = SatEnv(read_cnf_file("/home/assine/fyp/dataset_fyp/uf20-01.cnf"))
+assigned_variables = [15, -5, -12, -7]
+assigned_values = np.zeros(20, dtype=int)
+for i in assigned_variables:
+    assigned_values[abs(i)-1] = np.sign(i)
+
+env = SatEnv(read_cnf_file("/home/assine/fyp/dataset_fyp/uf20-01.cnf"), assigned_values)
 vec_env = make_vec_env(lambda: env, n_envs=1)
+
 model = PPO("MlpPolicy", vec_env, verbose=1)
-model.learn(total_timesteps=10000)
-obs = vec_env.reset()
+checkpoint_callback = CheckpointCallback(save_freq=1000, save_path='./agents/',
+                                         name_prefix='rl_agent')
 
-action, _states = model.predict(obs, deterministic=True)
-
-new_obs, reward, done, info = vec_env.step(action)
-env.render()
-print(f"Action: {action}, Reward: {reward}, Done: {done}")
-
+model.learn(total_timesteps=10000, callback=checkpoint_callback)
+model.save("final_model")

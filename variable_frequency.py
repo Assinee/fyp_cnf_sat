@@ -21,14 +21,6 @@ def read_cnf_file(filename):
     return formula
 
 
-def is_a_conflict(lst):
-    if isinstance(lst, list):
-        for sub_lst in lst:
-            if isinstance(sub_lst, list) and len(sub_lst) == 0:
-                return True
-    return False
-
-
 def get_most_frequent_variable(formula):
     flat_list_abs = [abs(num) for sublist in formula for num in sublist]
     flat_list = [num for sublist in formula for num in sublist]
@@ -39,8 +31,7 @@ def get_most_frequent_variable(formula):
     if positive_count >= negative_count:
         return variable
     else:
-        return -variable
-    
+        return -variable   
     
 
 def solve(formula, assigned_variables=[], branch_count=0):
@@ -52,7 +43,7 @@ def solve(formula, assigned_variables=[], branch_count=0):
         new_formula = [[x for x in sublist if x != -variable] for sublist in new_formula]
     if new_formula == []:
        return (assigned_variables, branch_count)
-    if is_a_conflict(new_formula):
+    if any(len(clause) == 0 for clause in new_formula):
         return (None, branch_count)
     new_variable = get_most_frequent_variable(new_formula)
     assigned_variables.append(new_variable)

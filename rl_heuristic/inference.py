@@ -1,28 +1,39 @@
-from training import read_cnf_file
-from stable_baselines3.common.env_checker import check_env
-from stable_baselines3 import PPO  # or any other algorithm from Stable Baselines3
+import gymnasium as gym
+import numpy as np
+from stable_baselines3 import PPO
 from sat_env import SatEnv
+import gzip
+from stable_baselines3.common.env_util import make_vec_env
 
-# Load the best model
-best_model = PPO.load("/home/assine/fyp/rl_heuristic/sat_solver_model.zip")
-formula=read_cnf_file('/home/assine/fyp/dataset_fyp/uf20-01.cnf')
 
-# Create a new environment for inference
-inference_env = SatEnv(formula)
-# check_env(inference_env)
+def read_cnf_file(filename):
+    formula = []
+    opener = gzip.open if filename.endswith('.gz') else open
 
-# Reset the environment
-obs = inference_env.reset()
+    with opener(filename, 'rt') as file:
+        for line in file:
+            if not (line.startswith('c') or line.startswith('p')):
+                clause = []
+                for token in line.split():
+                    if token != '0' and token.lstrip('-').isdigit():
+                        clause.append(int(token))
+                if clause:
+                    formula.append(clause)
 
-# Run inference
-while True:
-    action, _state = best_model.predict(obs, deterministic=True)
-    obs, reward, done, info = inference_env.step(action)
-    print(info)
-    if done:
-        print("Satisfiable. Assignment:", info["assignment"])
-        break
-    elif truncated:
-        print("Truncated episode.")
-        break
+    return formula
 
+assigned_variables = [15, -5, -12, -7]
+assigned_values = np.zeros(20, dtype=int)
+for i in assigned_variables:
+    assigned_values[abs(i)-1] = np.sign(i)
+
+env = SatEnv(read_cnf_file("/home/assine/fyp/dataset_fyp/uf20-02.cnf"), assigned_values)
+vec_env = make_vec_env(lambda: env, n_envs=1)
+obs = vec_env.reset()
+
+model = PPO.load("final_model")
+action, _states = model.predict(obs, deterministic=True)
+
+new_obs, reward, done, info = vec_env.step(action)
+env.render()
+print(f"Action: {action}, Reward: {reward}, Done: {done} ,Info: {info}")
