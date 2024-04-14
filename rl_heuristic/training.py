@@ -31,8 +31,9 @@ env = SatEnv(read_cnf_file("/home/assine/fyp/dataset_fyp/uf20-01.cnf"), assigned
 vec_env = make_vec_env(lambda: env, n_envs=1)
 
 model = PPO("MlpPolicy", vec_env, verbose=1)
-checkpoint_callback = CheckpointCallback(save_freq=1000, save_path='./agents/',
+checkpoint_callback = CheckpointCallback(save_freq=10000, save_path='./agents/',
                                          name_prefix='rl_agent')
 
-model.learn(total_timesteps=10000, callback=checkpoint_callback)
+model.learn(total_timesteps=100000, callback=checkpoint_callback)
 model.save("final_model")
+
