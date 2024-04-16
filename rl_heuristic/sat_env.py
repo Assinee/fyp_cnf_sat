@@ -8,13 +8,10 @@ class SatEnv(gym.Env):
     def __init__(self, formula, assigned_variables, max_solution=10, max_conflict=8, alpha=0.1):
         super().__init__()
         self.original_formula = formula
-        self.original_assigned_variables = assigned_variables
-        
+        self.original_assigned_variables = assigned_variables      
         self.formula = list(formula)
         self.variables = self.get_all_variables(formula)
-        self.num_variables = len(self.variables)
-        
-        # Initialize the action space and observation space
+        self.num_variables=len(self.variables)
         self.action_space = spaces.Discrete(self.num_variables * 2)
         self.observation_space = spaces.Box(low=-1, high=1, shape=(self.num_variables,), dtype=np.float32)
         
@@ -30,8 +27,13 @@ class SatEnv(gym.Env):
         """Extracts all unique variables from the formula."""
         return sorted(list(set(abs(num) for sublist in formula for num in sublist)))
 
+
+
+    
     def step(self, action):
         """Execute one time step within the environment."""
+        print(action)
+        action=self.map_valid_actions(action,self.already_assigned)
         self.step_count += 1
         variable_index = action // 2
         variable_value = (action % 2) * 2 - 1
@@ -63,7 +65,18 @@ class SatEnv(gym.Env):
         }
 
         return np.array(self.assignment, dtype=np.float32), reward, done, False, info
-
+    
+    def map_valid_actions(self,action,already_assigned):
+        already_assigned_action = []
+        for val in already_assigned:
+            base_index = (val - 1) * 2 
+            already_assigned_action.extend([base_index, base_index + 1])
+        count = len([x for x in already_assigned_action if x <= action])
+        new_action=action+count
+        while new_action in already_assigned_action:
+            new_action+=1
+        return new_action
+    
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         self.formula = list(self.original_formula)  # Reset formula to initial state

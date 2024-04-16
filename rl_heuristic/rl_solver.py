@@ -35,10 +35,16 @@ def get_rl_variable(formula,assigned_variables):
 
     model = PPO.load("final_model")
     action, _states = model.predict(obs, deterministic=True)
-    variable_value=action[0]
+    new_obs, reward, done, info = vec_env.step(action) 
+    variable_value=get_action(assigned_values,info[0]["assigned_variables"])    
     env.render()
-    return((variable_value//2)+1)*((variable_value % 2) * 2 - 1)
-    
+    return variable_value
+
+def get_action(assigned_values,list_output):
+    for i in range(len(list_output)):
+        if list_output[i] != assigned_values[i]:
+            return list_output[i]*(i+1)
+    return 0
 
 def solve(formula, original_formula=[], assigned_variables=[], branch_count=0):
     if assigned_variables == []:
@@ -54,7 +60,7 @@ def solve(formula, original_formula=[], assigned_variables=[], branch_count=0):
         return (None, branch_count)
     new_variable = get_rl_variable(original_formula,assigned_variables)
     assigned_variables.append(new_variable)
-
+    print(new_variable)
     assigned_variables_new= assigned_variables[:]
     result, branch_count = solve(new_formula, original_formula,assigned_variables_new, branch_count + 1)
     if result is not None:
