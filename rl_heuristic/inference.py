@@ -22,12 +22,12 @@ def read_cnf_file(filename):
 
     return formula
 
-assigned_variables = [-16]
-assigned_values = np.zeros(20, dtype=int)
-for i in assigned_variables:
-    assigned_values[abs(i)-1] = np.sign(i)
-print(assigned_values)
-env = SatEnv(read_cnf_file("/home/assine/fyp/dataset_fyp/uf20-01.cnf"), assigned_values)
+# assigned_variables = [-5]
+# assigned_values = np.zeros(20, dtype=int)
+# for i in assigned_variables:
+#     assigned_values[abs(i)-1] = np.sign(i)
+# print(assigned_values)
+env = SatEnv(read_cnf_file("/home/assine/fyp/dataset_fyp/uf20-02.cnf"))
 vec_env = make_vec_env(lambda: env, n_envs=1)
 obs = vec_env.reset()
 

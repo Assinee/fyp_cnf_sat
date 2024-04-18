@@ -3,7 +3,7 @@ import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.callbacks import CheckpointCallback
-from sat_env import SatEnv
+from cnf_sat_env import SatEnv
 import gzip
 
 def read_cnf_file(filename):
@@ -22,18 +22,18 @@ def read_cnf_file(filename):
 
     return formula
 
-assigned_variables = [15, -5, -12, -7]
-assigned_values = np.zeros(20, dtype=int)
-for i in assigned_variables:
-    assigned_values[abs(i)-1] = np.sign(i)
+# assigned_variables = [15, -5, -12, -7]
+# assigned_values = np.zeros(20, dtype=int)
+# for i in assigned_variables:
+#     assigned_values[abs(i)-1] = np.sign(i)
 
-env = SatEnv(read_cnf_file("/home/assine/fyp/dataset_fyp/uf20-01.cnf"), assigned_values)
+env = SatEnv()
 vec_env = make_vec_env(lambda: env, n_envs=1)
 
 model = PPO("MlpPolicy", vec_env, verbose=1)
-checkpoint_callback = CheckpointCallback(save_freq=1000000, save_path='./agents/',
+checkpoint_callback = CheckpointCallback(save_freq=100000, save_path='./agents/',
                                          name_prefix='rl_agent')
 
-model.learn(total_timesteps=1000000, callback=checkpoint_callback)
+model.learn(total_timesteps=100000, callback=checkpoint_callback)
 model.save("final_model")
 
