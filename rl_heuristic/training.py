@@ -6,21 +6,21 @@ from stable_baselines3.common.callbacks import CheckpointCallback
 from cnf_sat_env import SatEnv
 import gzip
 
-def read_cnf_file(filename):
-    formula = []
-    opener = gzip.open if filename.endswith('.gz') else open
+# def read_cnf_file(filename):
+#     formula = []
+#     opener = gzip.open if filename.endswith('.gz') else open
 
-    with opener(filename, 'rt') as file:
-        for line in file:
-            if not (line.startswith('c') or line.startswith('p')):
-                clause = []
-                for token in line.split():
-                    if token != '0' and token.lstrip('-').isdigit():
-                        clause.append(int(token))
-                if clause:
-                    formula.append(clause)
+#     with opener(filename, 'rt') as file:
+#         for line in file:
+#             if not (line.startswith('c') or line.startswith('p')):
+#                 clause = []
+#                 for token in line.split():
+#                     if token != '0' and token.lstrip('-').isdigit():
+#                         clause.append(int(token))
+#                 if clause:
+#                     formula.append(clause)
 
-    return formula
+#     return formula
 
 # assigned_variables = [15, -5, -12, -7]
 # assigned_values = np.zeros(20, dtype=int)
