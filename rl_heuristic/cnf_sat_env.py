@@ -1,27 +1,26 @@
 import gymnasium as gym
 from gymnasium import spaces
-import cupy as np  # Using CuPy for GPU support
+import numpy as np 
 
 class SatEnv(gym.Env):
     metadata = {'render_modes': ['human'], 'render_fps': 20}
 
     def __init__(self):
         super().__init__()
-        self.action_space = spaces.Discrete(40)
-        self.observation_space = spaces.Box(low=-1, high=1, shape=(91, 20), dtype=np.int8)
+        self.action_space = spaces.Discrete(6)
+        self.observation_space = spaces.Box(low=-1, high=1, shape=(27, 3), dtype=np.int8)
         self.step_count = 0
-        self.alpha = 0.1
+        self.alpha = 1
         self.max_solution = 10
         self.max_conflict = 8
         self.reset()
 
     def step(self, action):
         self.step_count += 1
-        
         if action not in self.valid_action():
-            return self.observation.get(), -100, True, False, {"message": "Variable already assigned"}    
+            return self.observation, -100, True, False, {"message": "Variable already assigned"}    
         
-        index = action // 2
+        index = (action // 2)
         sign = 1 if action % 2 == 0 else -1
         updated = []
         is_conflict = False
@@ -31,7 +30,7 @@ class SatEnv(gym.Env):
         for clause in self.observation:
             clause = np.array(clause)
             if clause[index] == sign:
-                updated.append(np.zeros(20, dtype=int))
+                updated.append(np.zeros(3, dtype=int))
                 nb_simplified_clause += 1
             elif clause[index] == -sign:
                 clause[index] = 0
@@ -44,12 +43,12 @@ class SatEnv(gym.Env):
         self.observation = np.array(updated)
 
         if is_conflict:
-            return self.observation.get(), self.max_conflict / self.step_count, True, False, {"message": "Conflict found"}
+            return self.observation, self.max_conflict / self.step_count, True, False, {"message": "Conflict found","steps":self.step_count}
         if is_solution:
-            return self.observation.get(), self.max_solution / self.step_count, True, False, {"message": "Solution found"}
+            return self.observation, self.max_solution / self.step_count, True, False, {"message": "Solution found","steps":self.step_count}
 
         reward = -self.alpha + self.alpha * nb_simplified_clause
-        return self.observation.get(), reward, False, False ,{}
+        return self.observation, reward, False, False ,{}
 
     def valid_action(self):
         valid_action = []

@@ -39,13 +39,14 @@ def solve(formula, assigned_variables=[], branch_count=0):
         new_formula = formula
     else:
         variable = assigned_variables[-1]
+        print(variable)
         new_formula = [clause for clause in formula if variable not in clause]
         new_formula = [[x for x in sublist if x != -variable] for sublist in new_formula]
     if new_formula == []:
        return (assigned_variables, branch_count)
     if any(len(clause) == 0 for clause in new_formula):
         return (None, branch_count)
-    new_variable = get_most_frequent_variable(new_formula)
+    new_variable = get_most_frequent_variable(new_formula)    
     assigned_variables.append(new_variable)
     assigned_variables_new= assigned_variables[:]
     result, branch_count = solve(new_formula, assigned_variables_new, branch_count + 1)
@@ -61,8 +62,9 @@ def solve(formula, assigned_variables=[], branch_count=0):
 # Example usage:
 # formula = [[1, -2, 3], [-1, 3], [-1, 2, 3], [1, -2]]
 # formula = [[1, 2], [1, -2], [-1, 2], [-1, -2]]
+formula= [[1,2],[-1,3],[-2,-3],[-1,2],[1,-3]]
 
-formula=read_cnf_file('/home/assine/fyp/dataset_fyp/uf20-01.cnf')
+# formula=read_cnf_file('/home/assine/fyp/dataset_fyp/uf20-01.cnf')
 
 start_time = time.time()
 result, branch_count = solve(formula)
@@ -75,5 +77,4 @@ if result is not None:
     print(f"Number of branches searched: {branch_count}")
 else:
     print("Unsatisfiable.")
-product specification 
-product review
+
