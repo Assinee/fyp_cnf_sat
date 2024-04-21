@@ -43,7 +43,6 @@ def get_rl_variable(formula):
     env.observation = observation
     action, _states = model.predict(observation, deterministic=True)
     new_observation, reward, done, _, info = env.step(action)
-    print("Info:", info)
     variable_index=(action//2)+1
     variable_sign= 1 if action % 2 == 0 else -1
     return variable_index*variable_sign
@@ -77,7 +76,13 @@ def solve(formula, assigned_variables=[], branch_count=0):
 # Example usage:
 # formula = [[1, -2, 3], [-1, 3], [-1, 2, 3], [1, -2]]
 # formula = [[1, 2], [1, -2], [-1, 2], [-1, -2]]
-formula = [[1,2],[-1,3],[-2,-3],[-1,2],[1,-3]]
+# formula = [[1,2],[-1,3],[-2,-3],[-1,2],[1,-3]]
+# formula = [[-1, 2], [1, -3], [-1, -2], [2, 3]]
+# formula= [[1, 2], [-1, -3], [1, -2], [2, 3]]
+# formula= [[1, -2], [-1], [1, 3], [-1, 2], [-2, 3], [1, -3]]
+# formula= [[-1, 2], [-1, -3], [1, -2], [2], [1, 2, -3], [-2, 3], [1, 3], [-1, -2], [3]]
+formula=[[-1, 2], [-1, -2, 3], [1], [2, 3], [3, -1], [-2, -3], [1, 2], [-1, 1], [2, -1]]
+
 
 # formula=read_cnf_file('/home/assine/fyp/dataset_fyp/uf20-01.cnf')
 

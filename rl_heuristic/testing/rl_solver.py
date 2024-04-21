@@ -13,7 +13,7 @@ df["rl_result"]=""
 df["rl_branch_count"]=""
 for i in range(df.shape[0]):
     env = SatEnv()
-    model = PPO.load("/home/assine/fyp/rl_heuristic/final_model.zip")
+    model = PPO.load("/home/assine/fyp/rl_heuristic/final_model/final_model_ppo_3_1_8_10_1000000.zip")
 
     def read_cnf_file(filename):
         formula = []

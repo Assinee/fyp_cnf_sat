@@ -18,7 +18,7 @@ class SatEnv(gym.Env):
     def step(self, action):
         self.step_count += 1
         if action not in self.valid_action():
-            return self.observation, -100, True, False, {"message": "Variable already assigned"}    
+            return self.observation, -10, True, False, {"message": "Variable already assigned"}    
         
         index = (action // 2)
         sign = 1 if action % 2 == 0 else -1
