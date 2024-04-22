@@ -1,19 +1,20 @@
 import time
 import gzip
 import numpy as np
-from stable_baselines3 import PPO
+from stable_baselines3 import A2C
 from ..cnf_sat_env import SatEnv
 import gzip
 import pandas as pd
 import ast
 from stable_baselines3.common.env_util import make_vec_env
 
-df = pd.read_csv('/home/assine/fyp/cnf_sat_3_variables.csv')
-df["rl_result"]=""
-df["rl_branch_count"]=""
+df = pd.read_csv('/home/assine/fyp/rl_heuristic/testing/results/a2c_3_1_9_10_1000000')
+# df["rl_result"]=""
+# df["rl_branch_count"]=""
 for i in range(df.shape[0]):
+    print(i)
     env = SatEnv()
-    model = PPO.load("/home/assine/fyp/rl_heuristic/final_model/final_model_ppo_3_1_8_10_1000000.zip")
+    model = A2C.load("/home/assine/fyp/rl_heuristic/final_model/final_model_a2c_3_1_9_10_1000000.zip")
 
     def read_cnf_file(filename):
         formula = []
@@ -42,23 +43,44 @@ for i in range(df.shape[0]):
         zero_clauses = np.zeros((max_nb_clause-len(observation), nb_variable), dtype=np.int8)
         observation = np.vstack((observation, zero_clauses))
         return observation
-
-
+    
     def get_rl_variable(formula):      
         observation=get_observation(formula,27)
         env.observation = observation
         action, _states = model.predict(observation, deterministic=True)
         new_observation, reward, done, _, info = env.step(action)
         print("Info:", info)
+        # if info == {"message": "Variable already assigned"}:
+        #     return 0                
         variable_index=(action//2)+1
         variable_sign= 1 if action % 2 == 0 else -1
         return variable_index*variable_sign
 
+    def check_formula(formula):
+        clean_formula = set()
+        for clause in formula:
+            clause_tuple = tuple(clause)  
+            if len(clause) == 1:
+                literal = clause[0]
+                if (-literal,) in clean_formula:  
+                    return "unsatisfiable"
+            else:
+                clause_set = set(clause)
+                for literal in clause:
+                    if -literal in clause_set:
+                        return "unsatisfiable"
+            clean_formula.add(clause_tuple)  
+        return clean_formula
+
 
     def solve(formula, assigned_variables=[], branch_count=0):
         print(branch_count)
+        if check_formula(formula)=="unsatisfiable":
+            return (None, branch_count)
+        else :
+            formula = check_formula(formula)
         if assigned_variables == []:
-            new_formula = formula
+                new_formula = formula
         else:
             variable = assigned_variables[-1]
             new_formula = [clause for clause in formula if variable not in clause]
@@ -99,7 +121,9 @@ for i in range(df.shape[0]):
         print("Satisfiable. Assignment:", result)
         print("Numbre of variable assigned",len(result))
     else:
+        df.loc[i, "rl_result"] = "unsatisfiable."
         print("Unsatisfiable.")
     print(f"Number of branches searched: {branch_count}")
-    df.to_csv('/home/assine/fyp/cnf_sat_3_variables.csv',index=False)
+
+    df.to_csv('/home/assine/fyp/rl_heuristic/testing/results/a2c_3_1_9_10_1000000', index=False)
 
