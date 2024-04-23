@@ -1,20 +1,20 @@
 import time
 import gzip
 import numpy as np
-from stable_baselines3 import A2C
+from stable_baselines3 import PPO
 from ..cnf_sat_env import SatEnv
 import gzip
 import pandas as pd
 import ast
 from stable_baselines3.common.env_util import make_vec_env
 
-df = pd.read_csv('/home/assine/fyp/rl_heuristic/testing/results/a2c_3_1_9_10_1000000')
+df = pd.read_csv('/home/assine/fyp/rl_heuristic/testing/results/ppo_restart_3_1_9_10_200_100000.csv')
 # df["rl_result"]=""
 # df["rl_branch_count"]=""
-for i in range(df.shape[0]):
+for i in range(19,df.shape[0]):
     print(i)
     env = SatEnv()
-    model = A2C.load("/home/assine/fyp/rl_heuristic/final_model/final_model_a2c_3_1_9_10_1000000.zip")
+    model = PPO.load("/home/assine/fyp/rl_heuristic/final_model/final_model_ppo_3_1_9_10_200_100000.zip")
 
     def read_cnf_file(filename):
         formula = []
@@ -49,7 +49,6 @@ for i in range(df.shape[0]):
         env.observation = observation
         action, _states = model.predict(observation, deterministic=True)
         new_observation, reward, done, _, info = env.step(action)
-        print("Info:", info)
         # if info == {"message": "Variable already assigned"}:
         #     return 0                
         variable_index=(action//2)+1
@@ -74,7 +73,6 @@ for i in range(df.shape[0]):
 
 
     def solve(formula, assigned_variables=[], branch_count=0):
-        print(branch_count)
         if check_formula(formula)=="unsatisfiable":
             return (None, branch_count)
         else :
@@ -125,5 +123,5 @@ for i in range(df.shape[0]):
         print("Unsatisfiable.")
     print(f"Number of branches searched: {branch_count}")
 
-    df.to_csv('/home/assine/fyp/rl_heuristic/testing/results/a2c_3_1_9_10_1000000', index=False)
+    df.to_csv('/home/assine/fyp/rl_heuristic/testing/results/ppo_restart_3_1_9_10_200_100000.csv', index=False)
 

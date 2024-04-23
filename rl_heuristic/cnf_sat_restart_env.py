@@ -9,19 +9,18 @@ class SatEnv(gym.Env):
         super().__init__()
         self.nb_variables =3
         self.action_space = spaces.Discrete(self.nb_variables*2)
-        self.observation_space = spaces.Box(low=-1, high=1, shape=(3**self.nb_variables, self.nb_variables), dtype=np.int8)
+        self.observation_space = spaces.Box(low=-1, high=1, shape=(3**self.nb_variables, 3), dtype=np.int8)
         self.step_count = 0
         self.alpha = 1
+        self.max_steps = 8
         self.max_solution = 10
         self.max_conflict = 9
         self.reset()
 
-
-
     def step(self, action):
         self.step_count += 1
         if action not in self.valid_action():
-            return self.observation, -200, True, False, {"message": "Variable already assigned"}    
+            return self.observation, -100, True, False, {"message": "Variable already assigned"}    
         
         index = (action // 2)
         sign = 1 if action % 2 == 0 else -1
@@ -49,7 +48,10 @@ class SatEnv(gym.Env):
             return self.observation, self.max_conflict / self.step_count, True, False, {"message": "Conflict found","steps":self.step_count}
         if is_solution:
             return self.observation, self.max_solution / self.step_count, True, False, {"message": "Solution found","steps":self.step_count}
-
+        
+        if self.step_count >= self.max_steps:
+            return self.observation, -50, True, False, {"message": "Timeout"}
+        
         reward = -self.alpha + self.alpha * nb_simplified_clause
         return self.observation, reward, False, False ,{}
 

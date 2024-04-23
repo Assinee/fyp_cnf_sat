@@ -1,13 +1,13 @@
 import time
 import gzip
 import numpy as np
-from stable_baselines3 import PPO
+from stable_baselines3 import A2C
 from cnf_sat_env import SatEnv
 import gzip
 from stable_baselines3.common.env_util import make_vec_env
 
 env = SatEnv()
-model = PPO.load("final_model")
+model = A2C.load("/home/assine/fyp/rl_heuristic/final_model/final_model_a2c_3_1_8_10_1000000.zip")
 
 def read_cnf_file(filename):
     formula = []
@@ -38,7 +38,8 @@ def get_observation(formula ,max_nb_clause):
     return observation
 
 
-def get_rl_variable(formula):      
+def get_rl_variable(formula):
+    print(formula)      
     observation=get_observation(formula,27)
     env.observation = observation
     action, _states = model.predict(observation, deterministic=True)
@@ -47,9 +48,28 @@ def get_rl_variable(formula):
     variable_sign= 1 if action % 2 == 0 else -1
     return variable_index*variable_sign
 
+def check_formula(formula):
+    clean_formula = set()
+    for clause in formula:
+        clause_tuple = tuple(clause)  
+        if len(clause) == 1:
+            literal = clause[0]
+            if (-literal,) in clean_formula:  
+                return "unsatisfiable"
+        else:
+            clause_set = set(clause)
+            for literal in clause:
+                if -literal in clause_set:
+                    return "unsatisfiable"
+        clean_formula.add(clause_tuple)  
+    return [list(clause) for clause in clean_formula]
+
 
 def solve(formula, assigned_variables=[], branch_count=0):
-    print(branch_count)
+    if check_formula(formula)=="unsatisfiable":
+        return (None, branch_count)
+    else :
+        formula = check_formula(formula)
     if assigned_variables == []:
         new_formula = formula
     else:
@@ -61,6 +81,7 @@ def solve(formula, assigned_variables=[], branch_count=0):
     if any(len(clause) == 0 for clause in new_formula):
         return (None, branch_count)
     new_variable = get_rl_variable(new_formula)
+    print(new_variable)
     assigned_variables.append(new_variable)
     assigned_variables_new= assigned_variables[:]
     result, branch_count = solve(new_formula,assigned_variables_new, branch_count + 1)
@@ -79,9 +100,9 @@ def solve(formula, assigned_variables=[], branch_count=0):
 # formula = [[1,2],[-1,3],[-2,-3],[-1,2],[1,-3]]
 # formula = [[-1, 2], [1, -3], [-1, -2], [2, 3]]
 # formula= [[1, 2], [-1, -3], [1, -2], [2, 3]]
-# formula= [[1, -2], [-1], [1, 3], [-1, 2], [-2, 3], [1, -3]]
+formula= [[-1, 2, -3], [-1, -2, 3], [1, -3], [1, 2]]
 # formula= [[-1, 2], [-1, -3], [1, -2], [2], [1, 2, -3], [-2, 3], [1, 3], [-1, -2], [3]]
-formula=[[-1, 2], [-1, -2, 3], [1], [2, 3], [3, -1], [-2, -3], [1, 2], [-1, 1], [2, -1]]
+# formula=[[-1, 2, 3], [1, -3], [-1, -2], [2], [1, -2], [3], [-2, -3], [1, 3], [-1, 1]]
 
 
 # formula=read_cnf_file('/home/assine/fyp/dataset_fyp/uf20-01.cnf')
