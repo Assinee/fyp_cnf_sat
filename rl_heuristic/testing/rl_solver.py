@@ -8,13 +8,13 @@ import pandas as pd
 import ast
 from stable_baselines3.common.env_util import make_vec_env
 
-df = pd.read_csv('/home/assine/fyp/rl_heuristic/testing/results/ppo_restart_3_1_9_10_200_100000.csv')
-# df["rl_result"]=""
-# df["rl_branch_count"]=""
-for i in range(19,df.shape[0]):
+df = pd.read_csv('/home/assine/fyp/cnf_sat_3_variables.csv')
+df["rl_result"]=""
+df["rl_branch_count"]=""
+for i in range(df.shape[0]):
     print(i)
     env = SatEnv()
-    model = PPO.load("/home/assine/fyp/rl_heuristic/final_model/final_model_ppo_3_1_9_10_200_100000.zip")
+    model = PPO.load("/home/assine/fyp/rl_heuristic/final_model/final_model_ppo_20_1_9_10_100_1000000.zip")
 
     def read_cnf_file(filename):
         formula = []
@@ -33,7 +33,7 @@ for i in range(19,df.shape[0]):
         return formula
 
     def get_observation(formula ,max_nb_clause):
-        nb_variable=3
+        nb_variable=20
         observation=[]
         for clause in formula:
             observation_clause=[0]*nb_variable
@@ -45,7 +45,7 @@ for i in range(19,df.shape[0]):
         return observation
     
     def get_rl_variable(formula):      
-        observation=get_observation(formula,27)
+        observation=get_observation(formula,1020)
         env.observation = observation
         action, _states = model.predict(observation, deterministic=True)
         new_observation, reward, done, _, info = env.step(action)
@@ -123,5 +123,5 @@ for i in range(19,df.shape[0]):
         print("Unsatisfiable.")
     print(f"Number of branches searched: {branch_count}")
 
-    df.to_csv('/home/assine/fyp/rl_heuristic/testing/results/ppo_restart_3_1_9_10_200_100000.csv', index=False)
+    df.to_csv('/home/assine/fyp/rl_heuristic/testing/results/ppo_20_1_9_10_100_1000000.csv', index=False)
 

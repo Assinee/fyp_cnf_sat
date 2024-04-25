@@ -7,7 +7,7 @@ import gzip
 from stable_baselines3.common.env_util import make_vec_env
 
 env = SatEnv()
-model = A2C.load("/home/assine/fyp/rl_heuristic/final_model/final_model_a2c_3_1_8_10_1000000.zip")
+model = A2C.load("/home/assine/fyp/rl_heuristic/final_model/final_model_ppo_20_1_9_10_100_1000000.zip")
 
 def read_cnf_file(filename):
     formula = []
@@ -26,7 +26,7 @@ def read_cnf_file(filename):
     return formula
 
 def get_observation(formula ,max_nb_clause):
-    nb_variable=3
+    nb_variable=20
     observation=[]
     for clause in formula:
         observation_clause=[0]*nb_variable
@@ -40,7 +40,7 @@ def get_observation(formula ,max_nb_clause):
 
 def get_rl_variable(formula):
     print(formula)      
-    observation=get_observation(formula,27)
+    observation=get_observation(formula,1020)
     env.observation = observation
     action, _states = model.predict(observation, deterministic=True)
     new_observation, reward, done, _, info = env.step(action)
@@ -95,12 +95,12 @@ def solve(formula, assigned_variables=[], branch_count=0):
 
 
 # Example usage:
-# formula = [[1, -2, 3], [-1, 3], [-1, 2, 3], [1, -2]]
+formula = [[1, -2, 3], [-1, 3], [-1, 2, 3], [1, -2]]
 # formula = [[1, 2], [1, -2], [-1, 2], [-1, -2]]
 # formula = [[1,2],[-1,3],[-2,-3],[-1,2],[1,-3]]
 # formula = [[-1, 2], [1, -3], [-1, -2], [2, 3]]
 # formula= [[1, 2], [-1, -3], [1, -2], [2, 3]]
-formula= [[-1, 2, -3], [-1, -2, 3], [1, -3], [1, 2]]
+# formula= [[-1, 2, -3], [-1, -2, 3], [1, -3], [1, 2]]
 # formula= [[-1, 2], [-1, -3], [1, -2], [2], [1, 2, -3], [-2, 3], [1, 3], [-1, -2], [3]]
 # formula=[[-1, 2, 3], [1, -3], [-1, -2], [2], [1, -2], [3], [-2, -3], [1, 3], [-1, 1]]
 
