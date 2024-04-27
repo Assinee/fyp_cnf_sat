@@ -6,7 +6,7 @@ import ast
 import gzip
 
 
-df = pd.read_csv('/home/assine/fyp/cnf_sat_3_variables.csv')
+df = pd.read_csv('/home/assine/fyp/dataset_generated/cnf_sat_15_variables.csv')
 df["rl_result"]=""
 df["rl_branch_count"]=""
 df["mf_result"]=""
@@ -109,6 +109,6 @@ for i in range(df.shape[0]):
     else:
         print("Unsatisfiable.")
         df.loc[i, "mf_result"] = "unsatisfiable."
-    df.to_csv('/home/assine/fyp/cnf_sat_3_variables.csv',index=False)
+    df.to_csv('/home/assine/fyp/dataset_generated/cnf_sat_15_variables.csv',index=False)
 
 
