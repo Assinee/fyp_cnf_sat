@@ -1,13 +1,14 @@
 import time
 import gzip
 import numpy as np
-from stable_baselines3 import A2C
+from stable_baselines3 import PPO
 from cnf_sat_env import SatEnv
 import gzip
+import random
 from stable_baselines3.common.env_util import make_vec_env
 
 env = SatEnv()
-model = A2C.load("/home/assine/fyp/rl_heuristic/final_model/final_model_ppo_20_1_9_10_100_1000000.zip")
+model = PPO.load("/home/assine/fyp/rl_heuristic/final_model/final_model_ppo_20_4_9_10_300_1000000.zip")
 
 def read_cnf_file(filename):
     formula = []
@@ -40,10 +41,15 @@ def get_observation(formula ,max_nb_clause):
 
 def get_rl_variable(formula):
     print(formula)      
-    observation=get_observation(formula,1020)
+    observation=get_observation(formula,180)
     env.observation = observation
     action, _states = model.predict(observation, deterministic=True)
     new_observation, reward, done, _, info = env.step(action)
+    print("info: ",info)
+    if info == {"message": "Variable already assigned"}:
+        print("hii")
+        random.shuffle(formula)
+        return get_rl_variable(formula)  
     variable_index=(action//2)+1
     variable_sign= 1 if action % 2 == 0 else -1
     return variable_index*variable_sign
@@ -66,10 +72,6 @@ def check_formula(formula):
 
 
 def solve(formula, assigned_variables=[], branch_count=0):
-    if check_formula(formula)=="unsatisfiable":
-        return (None, branch_count)
-    else :
-        formula = check_formula(formula)
     if assigned_variables == []:
         new_formula = formula
     else:
@@ -80,6 +82,10 @@ def solve(formula, assigned_variables=[], branch_count=0):
        return (assigned_variables, branch_count)
     if any(len(clause) == 0 for clause in new_formula):
         return (None, branch_count)
+    if check_formula(new_formula)=="unsatisfiable":
+        return (None, branch_count)
+    else :
+        new_formula = check_formula(new_formula)
     new_variable = get_rl_variable(new_formula)
     print(new_variable)
     assigned_variables.append(new_variable)
@@ -95,14 +101,26 @@ def solve(formula, assigned_variables=[], branch_count=0):
 
 
 # Example usage:
-formula = [[1, -2, 3], [-1, 3], [-1, 2, 3], [1, -2]]
+# formula = [[1, -2, 3], [-1, 3], [-1, 2, 3], [1, -2]]
 # formula = [[1, 2], [1, -2], [-1, 2], [-1, -2]]
-# formula = [[1,2],[-1,3],[-2,-3],[-1,2],[1,-3]]
+# formula = [[1, 3], [-1, 2, -3], [-2, 3], [1, -2]]
 # formula = [[-1, 2], [1, -3], [-1, -2], [2, 3]]
 # formula= [[1, 2], [-1, -3], [1, -2], [2, 3]]
 # formula= [[-1, 2, -3], [-1, -2, 3], [1, -3], [1, 2]]
 # formula= [[-1, 2], [-1, -3], [1, -2], [2], [1, 2, -3], [-2, 3], [1, 3], [-1, -2], [3]]
 # formula=[[-1, 2, 3], [1, -3], [-1, -2], [2], [1, -2], [3], [-2, -3], [1, 3], [-1, 1]]
+formula = [
+    [1, 2, -3], 
+    [-4, 5, 6, -7], 
+    [8, -9, 10],    
+    [-11, 12, -13, 14, 15], 
+    [16, -17, 18, -19, 20], 
+    [1, -2, 3, 4, -5], 
+    [-6, -7, -8],  
+    [9, 10, -11, -12], 
+    [13, 14, 15, -16, 17],
+    [-18, 19, -20]   
+]
 
 
 # formula=read_cnf_file('/home/assine/fyp/dataset_fyp/uf20-01.cnf')

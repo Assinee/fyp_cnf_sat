@@ -13,11 +13,12 @@ class SatEnv(gym.Env):
         self.observation_space = spaces.Box(
             low=-1,
             high=1,
-            shape=(1020, self.nb_variables),
+            shape=(91, self.nb_variables),
             dtype=np.int8,
         )
         self.step_count = 0
-        self.alpha = 1
+        self.nb_simplified_clause = 0
+        self.alpha = 4
         self.max_solution = 10
         self.max_conflict = 9
         self.reset()
@@ -27,7 +28,7 @@ class SatEnv(gym.Env):
         if action not in self.valid_action():
             return (
                 self.observation,
-                -850,
+                -1200,
                 True,
                 False,
                 {"message": "Variable already assigned"},
@@ -38,13 +39,12 @@ class SatEnv(gym.Env):
         updated = []
         is_conflict = False
         is_solution = False
-        nb_simplified_clause = 0
 
         for clause in self.observation:
             clause = np.array(clause)
             if clause[index] == sign:
                 updated.append(np.zeros(self.nb_variables, dtype=int))
-                nb_simplified_clause += 1
+                self.nb_simplified_clause += 1
             elif clause[index] == -sign:
                 clause[index] = 0
                 if np.all(clause == 0):
@@ -72,7 +72,7 @@ class SatEnv(gym.Env):
                 {"message": "Solution found", "steps": self.step_count},
             )
 
-        reward = -self.alpha + self.alpha * nb_simplified_clause
+        reward = -self.alpha * self.step_count + self.alpha * self.nb_simplified_clause
         return self.observation, reward, False, False, {}
 
     def valid_action(self):
@@ -85,6 +85,7 @@ class SatEnv(gym.Env):
 
     def reset(self, seed=None, options=None):
         self.step_count = 0
+        self.nb_simplified_clause = 0 
         self.observation = self.observation_space.sample()
         return self.observation, {}
 

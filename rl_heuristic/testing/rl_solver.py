@@ -7,14 +7,15 @@ import gzip
 import pandas as pd
 import ast
 from stable_baselines3.common.env_util import make_vec_env
+import random
 
-df = pd.read_csv('/home/assine/fyp/rl_heuristic/testing/results/ppo_5_3_9_10_100_1000000.csv')
-# df["rl_result"]=""
-# df["rl_branch_count"]=""
-for i in range(129,df.shape[0]):
-    print(i)
+
+df = pd.read_csv('/home/assine/fyp/dataset_generated/cnf_sat_3_variables.csv')
+df["rl_result"]=""
+df["rl_branch_count"]=""
+for i in range(1,df.shape[0]):
     env = SatEnv()
-    model = PPO.load("/home/assine/fyp/rl_heuristic/final_model/final_model_ppo_5_3_9_10_100_1000000.zip")
+    model = PPO.load("/home/assine/fyp/rl_heuristic/final_model/final_model_ppo_20_4_9_10_300_1000000.zip")
 
     def read_cnf_file(filename):
         formula = []
@@ -33,7 +34,7 @@ for i in range(129,df.shape[0]):
         return formula
 
     def get_observation(formula ,max_nb_clause):
-        nb_variable=5
+        nb_variable=20
         observation=[]
         for clause in formula:
             observation_clause=[0]*nb_variable
@@ -44,13 +45,18 @@ for i in range(129,df.shape[0]):
         observation = np.vstack((observation, zero_clauses))
         return observation
     
-    def get_rl_variable(formula):      
-        observation=get_observation(formula,45)
+    def get_rl_variable(formula):
+        print(formula)      
+        observation=get_observation(formula,180)
         env.observation = observation
         action, _states = model.predict(observation, deterministic=True)
         new_observation, reward, done, _, info = env.step(action)
-        # if info == {"message": "Variable already assigned"}:
-        #     return 0                
+        print(action)
+        print("info: ",info)
+        if info == {"message": "Variable already assigned"}:
+            print("hii")
+            random.shuffle(formula)
+            return get_rl_variable(formula)  
         variable_index=(action//2)+1
         variable_sign= 1 if action % 2 == 0 else -1
         return variable_index*variable_sign
@@ -69,16 +75,12 @@ for i in range(129,df.shape[0]):
                     if -literal in clause_set:
                         return "unsatisfiable"
             clean_formula.add(clause_tuple)  
-        return clean_formula
+        return [list(clause) for clause in clean_formula]
 
 
     def solve(formula, assigned_variables=[], branch_count=0):
-        if check_formula(formula)=="unsatisfiable":
-            return (None, branch_count)
-        else :
-            formula = check_formula(formula)
         if assigned_variables == []:
-                new_formula = formula
+            new_formula = formula
         else:
             variable = assigned_variables[-1]
             new_formula = [clause for clause in formula if variable not in clause]
@@ -87,7 +89,12 @@ for i in range(129,df.shape[0]):
             return (assigned_variables, branch_count)
         if any(len(clause) == 0 for clause in new_formula):
             return (None, branch_count)
+        if check_formula(new_formula)=="unsatisfiable":
+            return (None, branch_count)
+        else :
+            new_formula = check_formula(new_formula)
         new_variable = get_rl_variable(new_formula)
+        print(new_variable)
         assigned_variables.append(new_variable)
         assigned_variables_new= assigned_variables[:]
         result, branch_count = solve(new_formula,assigned_variables_new, branch_count + 1)
@@ -123,5 +130,5 @@ for i in range(129,df.shape[0]):
         print("Unsatisfiable.")
     print(f"Number of branches searched: {branch_count}")
 
-    df.to_csv('/home/assine/fyp/rl_heuristic/testing/results/ppo_5_3_9_10_100_1000000.csv', index=False)
+    df.to_csv('/home/assine/fyp/rl_heuristic/testing/results/test', index=False)
 
