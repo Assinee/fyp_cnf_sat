@@ -8,12 +8,12 @@ class SatEnv(gym.Env):
 
     def __init__(self):
         super().__init__()
-        self.nb_variables = 20
+        self.nb_variables = 5
         self.action_space = spaces.Discrete(self.nb_variables * 2)
         self.observation_space = spaces.Box(
             low=-1,
             high=1,
-            shape=(91, self.nb_variables),
+            shape=(243, self.nb_variables),
             dtype=np.int8,
         )
         self.step_count = 0
@@ -28,7 +28,7 @@ class SatEnv(gym.Env):
         if action not in self.valid_action():
             return (
                 self.observation,
-                -1200,
+                -200,
                 True,
                 False,
                 {"message": "Variable already assigned"},
@@ -72,7 +72,7 @@ class SatEnv(gym.Env):
                 {"message": "Solution found", "steps": self.step_count},
             )
 
-        reward = -self.alpha * self.step_count + self.alpha * self.nb_simplified_clause
+        reward = -self.alpha * self.step_count +  self.nb_simplified_clause/2
         return self.observation, reward, False, False, {}
 
     def valid_action(self):

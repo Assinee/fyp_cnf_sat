@@ -8,12 +8,12 @@ class SatEnv(gym.Env):
 
     def __init__(self,alpha,max_solution,max_conflict,unvalid_action_penalty,with_restart,max_steps,max_step_penalty):
         super().__init__()
-        self.nb_variables = 3
+        self.nb_variables = 5
         self.action_space = spaces.Discrete(self.nb_variables * 2)
         self.observation_space = spaces.Box(
             low=-1,
             high=1,
-            shape=(27, self.nb_variables),
+            shape=(243, self.nb_variables),
             dtype=np.int8,
         )
         self.step_count = 0

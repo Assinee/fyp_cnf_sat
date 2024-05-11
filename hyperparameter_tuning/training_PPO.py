@@ -9,7 +9,7 @@ alphas = [3, 4, 5]  # Example values for alpha
 max_solutions = [10]  # Example values for max_solution
 max_conflicts = [9]  # Example values for max_conflict
 unvalid_action_penalties = [-100, -200, -300]  # Example penalties
-with_restarts = [False]
+with_restarts = [False,True]
 max_stepss = [6, 8]  # Only relevant if with_restart is True
 
 def train_and_evaluate(env):
